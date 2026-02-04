@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô phỏng Sản xuất Nhôm (Aluminium)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes pulse-custom {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .animate-pulse-custom {
+            animation: pulse-custom 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen font-sans text-slate-900 p-4 flex flex-col items-center">
+
+    <div class="max-w-5xl w-full bg-white rounded-xl shadow-lg p-6 border border-slate-200">
+        <h1 class="text-2xl font-bold text-center text-blue-800 mb-2 uppercase tracking-tight">
+            Mô phỏng sản xuất nhôm (Aluminium)
+        </h1>
+        <p class="text-center text-slate-600 mb-6 italic text-sm">
+            Thiết kế: Nguyễn Mạnh Hưng
+        </p>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <!-- Cột trái: Thông tin & Trạng thái -->
+            <div class="lg:col-span-1 space-y-4">
+                <div class="p-3 bg-blue-50 rounded-lg border-l-4 border-blue-500 shadow-sm">
+                    <h3 class="font-bold text-blue-700 flex items-center gap-2 mb-1 uppercase text-xs">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                        Lưu ý kỹ thuật
+                    </h3>
+                    <p class="text-[11px] text-slate-600 leading-relaxed">
+                        Các điện cực anode cần nhúng sâu vào lớp điện ly để tăng diện tích tiếp xúc nhưng <b>không được chạm vào cathode</b> (đáy thùng) để tránh đoản mạch.
+                    </p>
+                </div>
+
+                <div class="p-3 bg-slate-100 rounded-lg border border-slate-200">
+                    <h3 class="font-bold text-slate-700 text-[10px] uppercase mb-3 tracking-wider">Theo dõi mức nhôm</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <div class="flex justify-between text-[10px] mb-1 font-bold">
+                                <span>Thùng điện phân</span>
+                                <span id="tank-level-text">15.0</span>
+                            </div>
+                            <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                                <div id="tank-level-bar" class="bg-blue-400 h-full transition-all duration-300" style="width: 50%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-[10px] mb-1 font-bold">
+                                <span>Thùng thành phẩm</span>
+                                <span id="storage-level-text">0.0</span>
+                            </div>
+                            <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                                <div id="storage-level-bar" class="bg-slate-500 h-full transition-all duration-300" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 shadow-inner">
+                    <h3 class="font-bold text-slate-700 text-xs mb-2 italic">Phản ứng:</h3>
+                    <div class="text-[10px] space-y-2 font-mono">
+                        <p class="text-red-600 font-bold">Anode (+): 2O<sup>2-</sup> → O<sub>2</sub> + 4e</p>
+                        <p class="text-blue-600 font-bold">Cathode (-): Al<sup>3+</sup> + 3e → Al</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cột phải: Đồ họa mô phỏng -->
+            <div class="lg:col-span-3 flex flex-col items-center">
+                <div class="relative w-full h-[450px] bg-white border-2 border-slate-300 rounded-lg overflow-hidden mb-4 shadow-inner">
+                    <svg id="sim-svg" viewBox="0 0 160 100" class="w-full h-full">
+                        <!-- Thùng điện phân -->
+                        <g transform="translate(10, 0)">
+                            <rect x="10" y="30" width="80" height="60" fill="#f1f5f9" stroke="#475569" stroke-width="1" />
+                            <path d="M10 80 L10 90 L90 90 L90 80 L85 80 L85 85 L15 85 L15 80 Z" fill="#1e293b" />
+                            <rect x="15" y="40" width="70" height="35" fill="#fef08a" opacity="0.8" />
+                            
+                            <!-- Nhôm lỏng tích tụ -->
+                            <rect id="al-liquid-tank" x="15" y="70" width="70" height="15" fill="#cbd5e1" stroke="#94a3b8" stroke-width="0.2" />
+                            
+                            <!-- Anode -->
+                            <rect x="25" y="15" width="50" height="5" fill="#0f172a" />
+                            <rect x="28" y="20" width="4" height="48" fill="#1e293b" />
+                            <rect x="38" y="20" width="4" height="48" fill="#1e293b" />
+                            <rect x="48" y="20" width="4" height="48" fill="#1e293b" />
+                            <rect x="58" y="20" width="4" height="48" fill="#1e293b" />
+                            <rect x="68" y="20" width="4" height="48" fill="#1e293b" />
+
+                            <!-- Cửa tháo -->
+                            <path d="M90 82 L115 82 L115 85 L90 85" fill="#94a3b8" stroke="#475569" stroke-width="0.5" />
+                            <circle id="drain-valve" cx="95" cy="83.5" r="2.5" fill="#1e293b" stroke="white" stroke-width="0.5" class="cursor-pointer" />
+                            
+                            <!-- Dòng chảy -->
+                            <g id="flow-effect" style="display: none;">
+                                <path d="M112 83.5 L112 92" fill="none" stroke="#94a3b8" stroke-width="3" stroke-linecap="round" stroke-dasharray="2,2">
+                                    <animate attributeName="stroke-dashoffset" from="10" to="0" dur="0.2s" repeatCount="indefinite" />
+                                </path>
+                            </g>
+
+                            <g id="ion-container"></g>
+                            <g id="bubble-container"></g>
+
+                            <text x="50" y="12" text-anchor="middle" font-size="3" font-weight="bold">Anode (Nhúng sâu)</text>
+                            <text x="50" y="94" text-anchor="middle" font-size="3" fill="#1e293b" font-weight="bold">Cathode (Đáy thùng)</text>
+                            <text id="tank-al-label" x="50" y="77.5" text-anchor="middle" font-size="2.5" fill="#334155" font-weight="bold">Nhôm nóng chảy</text>
+                        </g>
+
+                        <!-- Thùng đựng thành phẩm -->
+                        <g transform="translate(110, 88)">
+                            <path d="M0 0 L24 0 L20 10 L4 10 Z" fill="#e2e8f0" stroke="#475569" stroke-width="0.8" />
+                            <path id="storage-al-fill" d="M4 10 L20 10 L20 10 L4 10 Z" fill="#94a3b8" />
+                            <text x="12" y="13" text-anchor="middle" font-size="2.5" font-weight="bold">Thùng đựng Al lỏng</text>
+                        </g>
+
+                        <text id="draining-text" x="100" y="78" font-size="2.5" fill="#ef4444" font-weight="bold" class="animate-pulse-custom" style="display: none;">ĐANG THÁO NHÔM...</text>
+                    </svg>
+
+                    <!-- Overlay -->
+                    <div id="start-overlay" class="absolute inset-0 bg-slate-900/5 backdrop-blur-[1px] flex items-center justify-center">
+                        <div class="bg-white/90 px-8 py-3 rounded-full shadow-lg border border-slate-200">
+                            <p class="text-slate-700 font-bold tracking-tight">Anode đã được nhúng sâu - Nhấn Bắt đầu để sản xuất</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Điều khiển -->
+                <div class="flex flex-wrap gap-4 justify-center">
+                    <button id="btn-toggle" class="flex items-center gap-2 px-6 py-3 rounded-full font-bold text-white transition-all shadow-md active:scale-95 bg-blue-600 hover:bg-blue-700">
+                        <span id="btn-toggle-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                        </span>
+                        <span id="btn-toggle-text">Bắt đầu điện phân</span>
+                    </button>
+
+                    <button id="btn-drain" class="flex items-center gap-2 px-6 py-3 rounded-full font-bold transition-all shadow-md active:scale-95 bg-green-100 text-green-700 border border-green-300 hover:bg-green-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        <span id="btn-drain-text">Mở nút tháo Al</span>
+                    </button>
+
+                    <button id="btn-reset" class="flex items-center gap-2 px-6 py-3 rounded-full font-bold bg-slate-200 text-slate-700 hover:bg-slate-300 transition-all shadow-sm active:scale-95">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                        Làm mới
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-slate-700">
+            <div class="bg-blue-50/50 p-4 rounded-lg border border-blue-100 shadow-sm">
+                <h4 class="font-bold mb-2 flex items-center gap-2 text-blue-800 uppercase tracking-tight text-xs">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                    Đặc điểm kỹ thuật
+                </h4>
+                <p class="text-xs text-slate-700 leading-relaxed">
+                    Việc nhúng sâu anode giúp giảm điện trở của lớp chất điện ly và tăng tốc độ phản ứng. Tuy nhiên, khoảng cách giữa cực dương và cực âm (cathode) luôn được duy trì ổn định để tránh tình trạng nhôm lỏng vừa tạo thành lại bị oxi hóa ngược lại hoặc gây chập điện.
+                </p>
+            </div>
+            <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 shadow-sm flex flex-col justify-center items-center">
+                <h4 class="font-bold mb-2 text-slate-800 uppercase tracking-tight italic text-xs">Khoảng cách an toàn</h4>
+                <div class="w-16 h-8 border-l border-r border-b border-slate-400 relative">
+                   <div class="absolute top-0 left-2 right-2 h-1 bg-slate-800"></div>
+                   <div class="absolute bottom-1 left-0 right-0 h-2 bg-blue-300 opacity-50"></div>
+                   <div class="absolute top-1 bottom-3 left-1/2 w-0.5 bg-red-400 -translate-x-1/2"></div>
+                </div>
+                <p class="text-[10px] text-slate-400 mt-2">
+                    Khoảng cách anode - cathode ổn định
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let isRunning = false;
+        let isDraining = false;
+        let tankAlLevel = 15;
+        let storageAlLevel = 0;
+        let ions = [];
+        let bubbles = [];
+
+        // DOM Elements
+        const btnToggle = document.getElementById('btn-toggle');
+        const btnToggleText = document.getElementById('btn-toggle-text');
+        const btnToggleIcon = document.getElementById('btn-toggle-icon');
+        const btnDrain = document.getElementById('btn-drain');
+        const btnDrainText = document.getElementById('btn-drain-text');
+        const btnReset = document.getElementById('btn-reset');
+        const startOverlay = document.getElementById('start-overlay');
+        const tankLevelText = document.getElementById('tank-level-text');
+        const tankLevelBar = document.getElementById('tank-level-bar');
+        const storageLevelText = document.getElementById('storage-level-text');
+        const storageLevelBar = document.getElementById('storage-level-bar');
+        const alLiquidTank = document.getElementById('al-liquid-tank');
+        const tankAlLabel = document.getElementById('tank-al-label');
+        const storageAlFill = document.getElementById('storage-al-fill');
+        const drainValve = document.getElementById('drain-valve');
+        const flowEffect = document.getElementById('flow-effect');
+        const drainingText = document.getElementById('draining-text');
+        const ionContainer = document.getElementById('ion-container');
+        const bubbleContainer = document.getElementById('bubble-container');
+
+        // SVG Icons
+        const playIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+        const pauseIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
+
+        // Initialize Ions
+        function initIons() {
+            ions = [];
+            for (let i = 0; i < 15; i++) {
+                ions.push({
+                    id: i,
+                    x: 20 + Math.random() * 60,
+                    y: 45 + Math.random() * 25,
+                    type: Math.random() > 0.4 ? 'Al3+' : 'O2-',
+                    speed: 0.2 + Math.random() * 0.5
+                });
+            }
+        }
+
+        // Logic loop
+        function update() {
+            if (isRunning) {
+                ions.forEach(ion => {
+                    if (ion.type === 'Al3+') {
+                        ion.y += ion.speed;
+                        if (ion.y > 75) {
+                            ion.y = 40;
+                            tankAlLevel = Math.min(tankAlLevel + 0.05, 30);
+                        }
+                    } else {
+                        ion.y -= ion.speed;
+                        if (ion.y < 38) {
+                            ion.y = 65;
+                            bubbles.push({
+                                id: Date.now() + Math.random(),
+                                x: ion.x + (Math.random() - 0.5) * 5,
+                                y: 35
+                            });
+                        }
+                    }
+                });
+
+                bubbles = bubbles.map(b => ({ ...b, y: b.y - 1 })).filter(b => b.y > 10);
+            }
+
+            if (isDraining) {
+                if (tankAlLevel > 5) {
+                    tankAlLevel -= 0.2;
+                    storageAlLevel = Math.min(storageAlLevel + 0.2, 25);
+                } else {
+                    isDraining = false;
+                }
+            }
+
+            render();
+            requestAnimationFrame(update);
+        }
+
+        // Render function
+        function render() {
+            // Update UI Bars
+            tankLevelText.innerText = tankAlLevel.toFixed(1);
+            tankLevelBar.style.width = `${(tankAlLevel / 30) * 100}%`;
+            storageLevelText.innerText = storageAlLevel.toFixed(1);
+            storageLevelBar.style.width = `${(storageAlLevel / 25) * 100}%`;
+
+            // Update Tank SVG
+            alLiquidTank.setAttribute('y', 85 - tankAlLevel);
+            alLiquidTank.setAttribute('height', tankAlLevel);
+            tankAlLabel.setAttribute('y', 85 - tankAlLevel / 2);
+
+            // Update Storage Fill SVG
+            const sRatio = storageAlLevel / 25;
+            const xOffset = (1 - sRatio) * 2;
+            const topY = 10 - storageAlLevel / 2.5;
+            storageAlFill.setAttribute('d', `M${4 + xOffset} ${topY} L${20 - xOffset} ${topY} L20 10 L4 10 Z`);
+
+            // Update Valve & Flow
+            drainValve.setAttribute('fill', isDraining ? '#ef4444' : '#1e293b');
+            flowEffect.style.display = isDraining ? 'block' : 'none';
+            drainingText.style.display = isDraining ? 'block' : 'none';
+
+            // Update Buttons State
+            btnDrain.disabled = tankAlLevel <= 5 || isRunning;
+            if (isDraining) {
+                btnDrain.classList.replace('bg-green-100', 'bg-red-500');
+                btnDrain.classList.replace('text-green-700', 'text-white');
+                btnDrainText.innerText = "Đóng nút tháo";
+            } else {
+                btnDrain.classList.replace('bg-red-500', 'bg-green-100');
+                btnDrain.classList.replace('text-white', 'text-green-700');
+                btnDrainText.innerText = "Mở nút tháo Al";
+            }
+
+            // Render Ions
+            ionContainer.innerHTML = '';
+            if (isRunning) {
+                ions.forEach(ion => {
+                    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    circle.setAttribute('cx', ion.x);
+                    circle.setAttribute('cy', ion.y);
+                    circle.setAttribute('r', '1.2');
+                    circle.setAttribute('fill', ion.type === 'Al3+' ? '#2563eb' : '#dc2626');
+                    ionContainer.appendChild(circle);
+                });
+            }
+
+            // Render Bubbles
+            bubbleContainer.innerHTML = '';
+            bubbles.forEach(b => {
+                const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                circle.setAttribute('cx', b.x);
+                circle.setAttribute('cy', b.y);
+                circle.setAttribute('r', '0.8');
+                circle.setAttribute('fill', 'white');
+                circle.setAttribute('stroke', '#ef4444');
+                circle.setAttribute('stroke-width', '0.1');
+                bubbleContainer.appendChild(circle);
+            });
+        }
+
+        // Events
+        btnToggle.onclick = () => {
+            isRunning = !isRunning;
+            startOverlay.style.display = 'none';
+            btnToggleText.innerText = isRunning ? "Tạm dừng" : "Bắt đầu điện phân";
+            btnToggleIcon.innerHTML = isRunning ? pauseIcon : playIcon;
+            btnToggle.classList.toggle('bg-blue-600', !isRunning);
+            btnToggle.classList.toggle('bg-amber-600', isRunning);
+        };
+
+        btnDrain.onclick = () => {
+            if (tankAlLevel > 5 && !isRunning) {
+                isDraining = !isDraining;
+            }
+        };
+
+        btnReset.onclick = () => {
+            isRunning = false;
+            isDraining = false;
+            tankAlLevel = 15;
+            storageAlLevel = 0;
+            bubbles = [];
+            startOverlay.style.display = 'flex';
+            btnToggleText.innerText = "Bắt đầu điện phân";
+            btnToggleIcon.innerHTML = playIcon;
+            btnToggle.classList.add('bg-blue-600');
+            btnToggle.classList.remove('bg-amber-600');
+            initIons();
+            render();
+        };
+
+        // Start
+        initIons();
+        render();
+        update(); // Start loop
+    </script>
+</body>
+</html>
